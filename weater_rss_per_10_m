@@ -1,0 +1,47 @@
+var RSS = "http://www.kma.go.kr/wid/queryDFSRSS.jsp?zone=1126058000";
+
+// 모듈 로드
+var parseString = require('xml2js').parseString;
+var request = require('request');
+i=0
+//RSS 다운로드 ---- (※1)
+function rss_down(){
+        request(RSS, function (err, response, body) {
+            if (!err && response.statusCode == 200) {
+                analyzeRSS(body);
+                if (i++ >10) return 
+                setTimeout(rss_down,600000);
+            }
+        });
+}
+//i=0
+// RSS 해석 ---- (※2)
+function analyzeRSS(xml) {
+    
+    parseString(xml, function (err, obj) {
+        if (err) {
+            console.log(err);
+            return;
+        }
+        
+        var datas = obj.rss.channel[0].item[0].description[0].body[0].data[0].temp;
+        console.log('온도:',datas)
+        doit(datas)
+       
+    });
+    
+}
+i=0
+function doit(datas){   
+    //console.log('온도',datas)
+    request("https://api.thingspeak.com/update?api_key=YZ2FJ8KH0Y3I322E&field1="+datas,function(err,res,body) {
+        //console.log('v',v)
+        // if (i++ >20) return 
+        // setTimeout(doit,20000);
+    })
+    
+
+ }
+console.log("ready")
+// doit()
+rss_down()
